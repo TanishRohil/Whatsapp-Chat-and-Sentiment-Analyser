@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Threadline — WhatsApp chat analytics</title>
+<meta name="description" content="Drop in a WhatsApp chat export and get a full portrait of the conversation — who talks most, when, sentiment, emoji, and more. Runs entirely in your browser.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ================= HERO / UPLOAD ================= -->
+<main id="view-hero" class="view">
+  <div class="bg-grid" aria-hidden="true"></div>
+  <nav class="topbar">
+    <div class="brand"><span class="brand-mark">◔◔</span> Threadline</div>
+    <a class="topbar-link" href="#" id="privacy-link">Your chat never leaves this tab →</a>
+  </nav>
+
+  <section class="hero">
+    <div class="hero-copy">
+      <p class="eyebrow">› WHATSAPP CHAT ANALYTICS</p>
+      <h1 class="display">Every chat has<br>a shape.<br><span class="accent">See yours.</span></h1>
+      <p class="lede">Export any WhatsApp conversation and Threadline turns the raw log into a portrait of who talks, when, how much, and how it feels — read receipts included.</p>
+
+      <div class="pulse-line" aria-hidden="true">
+        <svg viewBox="0 0 520 60" width="100%" height="60">
+          <path id="pulse-path" d="M0,30 L140,30 L155,10 L170,50 L185,30 L520,30" fill="none" stroke="currentColor" stroke-width="2"/>
+        </svg>
+        <div class="pulse-ticks">
+          <span class="tick">✓✓ sent</span>
+          <span class="tick tick-read">✓✓ read</span>
+          <span class="tick tick-parsed">✓✓ parsed</span>
+        </div>
+      </div>
+
+      <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Upload WhatsApp chat export">
+        <input type="file" id="file-input" accept=".txt" hidden>
+        <div class="dropzone-inner">
+          <div class="chat-icon">💬</div>
+          <p class="dz-title">Drop your exported <code>.txt</code> chat here</p>
+          <p class="dz-sub">or <span class="dz-browse">browse files</span> — nothing uploads to a server</p>
+        </div>
+      </div>
+      <p class="howto-link"><button class="link-btn" id="howto-toggle">How do I export a chat from WhatsApp?</button></p>
+      <div class="howto" id="howto-panel" hidden>
+        <ol>
+          <li>Open the chat or group in WhatsApp</li>
+          <li>Tap the contact/group name → <b>Export Chat</b></li>
+          <li>Choose <b>Without Media</b></li>
+          <li>Save the <code>.txt</code> file and drop it here</li>
+        </ol>
+      </div>
+      <p class="error-msg" id="error-msg" hidden></p>
+    </div>
+
+    <div class="hero-phone" aria-hidden="true">
+      <div class="phone">
+        <div class="phone-notch"></div>
+        <div class="phone-header">
+          <div class="phone-avatar">T</div>
+          <div>
+            <div class="phone-name">Team Thread</div>
+            <div class="phone-status">analyzing…</div>
+          </div>
+        </div>
+        <div class="phone-body" id="phone-bubbles">
+          <div class="bubble bubble-in">omg did you see the numbers</div>
+          <div class="bubble bubble-out">yeah — best week yet 📈</div>
+          <div class="bubble bubble-in">calling it now, best group chat fr</div>
+          <div class="bubble bubble-out">✓✓ analysis complete</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="trust-strip">
+    <div class="trust-item"><span class="trust-num">0</span><span>bytes sent to a server</span></div>
+    <div class="trust-item"><span class="trust-num">100%</span><span>runs in your browser</span></div>
+    <div class="trust-item"><span class="trust-num">&lt;1s</span><span>to parse most chats</span></div>
+  </section>
+</main>
+
+<!-- ================= LOADING ================= -->
+<div id="view-loading" class="view view-loading" hidden>
+  <div class="loading-inner">
+    <div class="loading-pulse">✓✓</div>
+    <p id="loading-text">Reading messages…</p>
+  </div>
+</div>
+
+<!-- ================= DASHBOARD ================= -->
+<main id="view-dashboard" class="view" hidden>
+  <nav class="topbar">
+    <div class="brand"><span class="brand-mark">◔◔</span> Threadline</div>
+    <button class="topbar-btn" id="new-chat-btn">Analyze another chat</button>
+  </nav>
+
+  <section class="dash-header">
+    <p class="eyebrow" id="group-eyebrow">› GROUP</p>
+    <h1 class="display" id="group-name">—</h1>
+    <p class="dash-range" id="group-range">—</p>
+  </section>
+
+  <section class="bento" id="bento-stats"></section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <p class="eyebrow">› WHO TALKS</p>
+      <h2>Messages per person</h2>
+    </div>
+    <div class="panel-body chart-body">
+      <canvas id="chart-users"></canvas>
+    </div>
+  </section>
+
+  <div class="two-col">
+    <section class="panel">
+      <div class="panel-head">
+        <p class="eyebrow">› WHEN</p>
+        <h2>Activity by hour</h2>
+      </div>
+      <div class="panel-body chart-body-sm">
+        <canvas id="chart-hours"></canvas>
+      </div>
+    </section>
+    <section class="panel">
+      <div class="panel-head">
+        <p class="eyebrow">› WHEN</p>
+        <h2>Activity by day of week</h2>
+      </div>
+      <div class="panel-body chart-body-sm">
+        <canvas id="chart-days"></canvas>
+      </div>
+    </section>
+  </div>
+
+  <section class="panel">
+    <div class="panel-head">
+      <p class="eyebrow">› OVER TIME</p>
+      <h2>Messages per month</h2>
+    </div>
+    <div class="panel-body chart-body">
+      <canvas id="chart-months"></canvas>
+    </div>
+  </section>
+
+  <div class="two-col">
+    <section class="panel">
+      <div class="panel-head">
+        <p class="eyebrow">› MEDIA</p>
+        <h2>Media shared per person</h2>
+      </div>
+      <div class="panel-body chart-body-sm">
+        <canvas id="chart-media"></canvas>
+      </div>
+    </section>
+    <section class="panel">
+      <div class="panel-head">
+        <p class="eyebrow">› EMOJI</p>
+        <h2>Top emoji</h2>
+      </div>
+      <div class="panel-body chart-body-sm">
+        <canvas id="chart-emoji"></canvas>
+      </div>
+    </section>
+  </div>
+
+  <section class="panel">
+    <div class="panel-head">
+      <p class="eyebrow">› VOCABULARY</p>
+      <h2>Most-used words</h2>
+    </div>
+    <div class="panel-body">
+      <div id="wordcloud" class="wordcloud"></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <p class="eyebrow">› MOOD</p>
+      <h2>Sentiment</h2>
+    </div>
+    <div class="panel-body">
+      <div class="sentiment-layout">
+        <div class="sentiment-chart-wrap">
+          <canvas id="chart-sentiment"></canvas>
+          <div class="sentiment-verdict" id="sentiment-verdict"></div>
+        </div>
+        <div class="sentiment-lists">
+          <div class="sentiment-col sentiment-pos">
+            <h3>Most positive</h3>
+            <ul id="list-positive"></ul>
+          </div>
+          <div class="sentiment-col sentiment-neu">
+            <h3>Most neutral</h3>
+            <ul id="list-neutral"></ul>
+          </div>
+          <div class="sentiment-col sentiment-neg">
+            <h3>Most negative</h3>
+            <ul id="list-negative"></ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <p class="eyebrow">› DATE RANGE</p>
+      <h2>Zoom into a window</h2>
+    </div>
+    <div class="panel-body">
+      <div class="range-controls">
+        <label>From
+          <input type="datetime-local" id="range-start">
+        </label>
+        <label>To
+          <input type="datetime-local" id="range-end">
+        </label>
+        <button class="btn-primary" id="range-run">Analyze range</button>
+      </div>
+      <div id="range-results" class="range-results" hidden>
+        <div class="sentiment-layout">
+          <div class="sentiment-chart-wrap">
+            <canvas id="chart-range-sentiment"></canvas>
+            <div class="sentiment-verdict" id="range-verdict"></div>
+          </div>
+          <div class="sentiment-lists">
+            <div class="sentiment-col sentiment-pos">
+              <h3>Most positive</h3>
+              <ul id="range-list-positive"></ul>
+            </div>
+            <div class="sentiment-col sentiment-neg">
+              <h3>Most negative</h3>
+              <ul id="range-list-negative"></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <p>Threadline reads the file locally in your browser — nothing is uploaded, stored, or sent anywhere.</p>
+  </footer>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script src="assets/afinn-lexicon.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
