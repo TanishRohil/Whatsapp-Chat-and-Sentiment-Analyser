@@ -1,8 +1,3 @@
-/* ==========================================================================
-   Threadline — WhatsApp chat analytics
-   100% client-side: parsing, analytics and charts all run in the browser.
-   ========================================================================== */
-
 (() => {
   "use strict";
 
@@ -13,8 +8,6 @@
   const dropzone = document.getElementById("dropzone");
   const fileInput = document.getElementById("file-input");
   const errorMsg = document.getElementById("error-msg");
-  const howtoToggle = document.getElementById("howto-toggle");
-  const howtoPanel = document.getElementById("howto-panel");
   const newChatBtn = document.getElementById("new-chat-btn");
   const loadingText = document.getElementById("loading-text");
 
@@ -223,7 +216,8 @@
   }
 
   /* ---------------- Chart helpers ---------------- */
-  const PALETTE = ["#38E07D", "#5AA9E6", "#E8B24D", "#FF6B57", "#B27DE8", "#7DE8D6", "#E87DBE", "#9CE87D"];
+  // Bootstrap 5 default theme colors (success, primary, warning, danger, info, secondary...)
+  const PALETTE = ["#198754", "#0d6efd", "#ffc107", "#dc3545", "#6f42c1", "#0dcaf0", "#d63384", "#20c997"];
 
   function destroyChart(key) {
     if (charts[key]) { charts[key].destroy(); delete charts[key]; }
@@ -231,8 +225,8 @@
 
   function baseGrid() {
     return {
-      grid: { color: "rgba(255,255,255,0.06)" },
-      ticks: { color: "#8A9694", font: { family: "JetBrains Mono", size: 11 } }
+      grid: { color: "rgba(0,0,0,0.08)" },
+      ticks: { color: "#6c757d", font: { size: 11 } }
     };
   }
 
@@ -268,8 +262,8 @@
         labels: analysis.byHour.map((_, h) => h + "h"),
         datasets: [{
           data: analysis.byHour,
-          borderColor: "#38E07D",
-          backgroundColor: "rgba(56,224,125,0.15)",
+          borderColor: "#198754",
+          backgroundColor: "rgba(25,135,84,0.15)",
           fill: true, tension: 0.35, pointRadius: 0,
         }]
       },
@@ -291,7 +285,7 @@
         labels: order.map(d => d.slice(0, 3)),
         datasets: [{
           data: order.map(d => analysis.byDay[d] || 0),
-          backgroundColor: "#5AA9E6",
+          backgroundColor: "#0d6efd",
           borderRadius: 6,
         }]
       },
@@ -313,7 +307,7 @@
         labels: months.map(m => m.slice(0, 3)),
         datasets: [{
           data: months.map(m => analysis.byMonth[m] || 0),
-          backgroundColor: "#E8B24D",
+          backgroundColor: "#ffc107",
           borderRadius: 6,
         }]
       },
@@ -332,7 +326,7 @@
     if (!entries.length) {
       ctx.getContext("2d").clearRect(0,0,ctx.width,ctx.height);
       const p = ctx.parentElement;
-      p.innerHTML = '<p style="color:#8A9694;font-family:JetBrains Mono;font-size:.85rem;text-align:center;padding-top:100px;">No media messages found</p>';
+      p.innerHTML = '<p style="color:#6c757d;font-size:.85rem;text-align:center;padding-top:100px;">No media messages found</p>';
       return;
     }
     charts.media = new Chart(ctx, {
@@ -343,7 +337,7 @@
       },
       options: {
         responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { position: "right", labels: { color: "#C9D3D2", font: { family: "Inter", size: 11 } } } }
+        plugins: { legend: { position: "right", labels: { color: "#212529", font: { size: 11 } } } }
       }
     });
   }
@@ -354,7 +348,7 @@
     const ctx = document.getElementById("chart-emoji");
     if (!entries.length) {
       const p = ctx.parentElement;
-      p.innerHTML = '<p style="color:#8A9694;font-family:JetBrains Mono;font-size:.85rem;text-align:center;padding-top:100px;">No emoji found</p>';
+      p.innerHTML = '<p style="color:#6c757d;font-size:.85rem;text-align:center;padding-top:100px;">No emoji found</p>';
       return;
     }
     charts.emoji = new Chart(ctx, {
@@ -365,7 +359,7 @@
       },
       options: {
         responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { position: "right", labels: { color: "#C9D3D2", font: { size: 16 } } } }
+        plugins: { legend: { position: "right", labels: { color: "#212529", font: { size: 16 } } } }
       }
     });
   }
@@ -377,11 +371,11 @@
       type: "doughnut",
       data: {
         labels: ["Positive", "Neutral", "Negative"],
-        datasets: [{ data: [s.pos, s.neu, s.neg], backgroundColor: ["#38E07D", "#E8B24D", "#FF6B57"], borderWidth: 0 }]
+        datasets: [{ data: [s.pos, s.neu, s.neg], backgroundColor: ["#198754", "#ffc107", "#dc3545"], borderWidth: 0 }]
       },
       options: {
         responsive: true, maintainAspectRatio: false, cutout: "72%",
-        plugins: { legend: { position: "bottom", labels: { color: "#C9D3D2", font: { family: "Inter", size: 11 } } } }
+        plugins: { legend: { position: "bottom", labels: { color: "#212529", font: { size: 11 } } } }
       }
     });
     document.getElementById(verdictId).innerHTML = `overall<br><b>${s.verdict}</b>`;
@@ -392,7 +386,7 @@
     container.innerHTML = "";
     const entries = Array.from(analysis.wordCounts.entries()).sort((a, b) => b[1] - a[1]).slice(0, 45);
     if (!entries.length) {
-      container.innerHTML = '<p style="color:#8A9694;font-family:JetBrains Mono;font-size:.85rem;">Not enough text to build a word cloud</p>';
+      container.innerHTML = '<p style="color:#6c757d;font-size:.85rem;">Not enough text to build a word cloud</p>';
       return;
     }
     const max = entries[0][1], min = entries[entries.length - 1][1];
@@ -441,9 +435,13 @@
       { num: (analysis.mostEmoji || "—") + "", label: "Most-used emoji" },
     ];
     el.innerHTML = stats.map(s => `
-      <div class="stat-card">
-        <span class="stat-num">${s.num}</span>
-        <span class="stat-label">${s.label}</span>
+      <div class="col-6 col-md-4 col-lg">
+        <div class="card text-center h-100 border-success-subtle">
+          <div class="card-body py-3">
+            <div class="fs-4 fw-bold">${s.num}</div>
+            <div class="text-secondary small">${s.label}</div>
+          </div>
+        </div>
       </div>`).join("");
   }
 
@@ -451,6 +449,7 @@
   function showView(view) {
     [viewHero, viewLoading, viewDash].forEach(v => v.hidden = true);
     view.hidden = false;
+    newChatBtn.hidden = view !== viewDash;
   }
 
   function fmtDate(d) {
@@ -515,11 +514,18 @@
           }
           loadingText.textContent = "Crunching the numbers…";
           setTimeout(() => {
-            allRows = rows;
-            fullAnalysis = analyze(rows);
-            runFullDashboard(fullAnalysis);
-            showView(viewDash);
-            window.scrollTo(0, 0);
+            try {
+              allRows = rows;
+              fullAnalysis = analyze(rows);
+              runFullDashboard(fullAnalysis);
+              showView(viewDash);
+              window.scrollTo(0, 0);
+            } catch (err2) {
+              console.error(err2);
+              showView(viewHero);
+              errorMsg.textContent = "Something went wrong analyzing that chat: " + (err2 && err2.message ? err2.message : err2) + " — please open the browser console (F12) for details.";
+              errorMsg.hidden = false;
+            }
           }, 250);
         } catch (err) {
           console.error(err);
@@ -550,8 +556,6 @@
     const file = e.dataTransfer.files[0];
     handleFile(file);
   });
-
-  howtoToggle.addEventListener("click", () => { howtoPanel.hidden = !howtoPanel.hidden; });
 
   newChatBtn.addEventListener("click", () => {
     fileInput.value = "";
