@@ -1,3 +1,8 @@
+/* ==========================================================================
+   WhatsApp Chat Analyzer
+   100% client-side: parsing, analytics and charts all run in the browser.
+   ========================================================================== */
+
 (() => {
   "use strict";
 
